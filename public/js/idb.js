@@ -14,8 +14,7 @@ request.onupgradeneeded = function(event) {
 request.onsuccess = function(event) {
     db = event.target.result;
     if (navigator.onLine) {
-      // we haven't created this yet, but we will soon, so let's comment it out for now
-      // uploadPizza();
+      uploadBudget();
     }
   };
   
@@ -34,3 +33,44 @@ request.onsuccess = function(event) {
       // add record to object store
       budgetObjectStore.add(record);
   }
+
+  function uploadBudget() {
+      const transaction = db.transaction(['budget'], 'readWrite');
+
+      // access pending object store
+      const budgetObjectStore = transaction.objectStore('budget');
+
+      // get all records from store
+      const getAll = budgetObjectStore.getAll();
+
+      getAll.onsuccess = function() {
+        // if there was data in indexedDb's store, let's send it to the api server
+        if (getAll.result.length > 0) {
+          fetch('/routes/api', {
+            method: 'POST',
+            body: JSON.stringify(getAll.result),
+            headers: {
+              Accept: 'application/json, text/plain, */*',
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(response => response.json())
+            .then(serverResponse => {
+              if (serverResponse.message) {
+                throw new Error(serverResponse);
+              }
+    
+              const transaction = db.transaction(['budget'], 'readwrite');
+              const budgetObjectStore = transaction.objectStore('budget');
+              // clear all items in store
+              budgetObjectStore.clear();
+            })
+            .catch(err => {
+              // set reference to redirect back here
+              console.log(err);
+            });
+        }
+      };
+    }
+
+  window.addEventListener('online', uploadBudget);
