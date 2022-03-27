@@ -1,20 +1,19 @@
 // create variable to hold db connection
 let db;
 // establish a connection to IndexedDB database 'budget_tracker' and set it to version 1
-const req = indexedDB.open('budget_tracker', 1);
+const request = indexedDB.open('budget_tracker', 1);
 
 request.onupgradeneeded = function(event) {
     // save reference to db 
     const db = event.target.result;
     // create an object store called `budget`
-    db.createObjectStore('budget', { autoincrement: true });
+    db.createObjectStore('new_budget', { autoincrement: true });
 };
 
 // upon a successful 
 request.onsuccess = function(event) {
     db = event.target.result;
     if (navigator.onLine) {
-      uploadBudget();
     }
   };
   
@@ -25,20 +24,20 @@ request.onsuccess = function(event) {
 
   function saveRecord(record) {
       // open new transaction with db
-      const transaction = db.transaction(['budget'], 'readWrite');
+      const transaction = db.transaction(['new_budget'], 'readwrite');
 
       // access object store
-      const budgetObjectStore = transaction.objectStore('budget');
+      const budgetObjectStore = transaction.objectStore('new_budget');
 
       // add record to object store
       budgetObjectStore.add(record);
   }
 
   function uploadBudget() {
-      const transaction = db.transaction(['budget'], 'readWrite');
+      const transaction = db.transaction(['new_budget'], 'readwrite');
 
       // access pending object store
-      const budgetObjectStore = transaction.objectStore('budget');
+      const budgetObjectStore = transaction.objectStore('new_budget');
 
       // get all records from store
       const getAll = budgetObjectStore.getAll();
@@ -60,8 +59,8 @@ request.onsuccess = function(event) {
                 throw new Error(serverResponse);
               }
     
-              const transaction = db.transaction(['budget'], 'readwrite');
-              const budgetObjectStore = transaction.objectStore('budget');
+              const transaction = db.transaction(['new_budget'], 'readwrite');
+              const budgetObjectStore = transaction.objectStore('new_budget');
               // clear all items in store
               budgetObjectStore.clear();
             })
